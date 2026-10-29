@@ -1,0 +1,22 @@
+# trail-ws.service — the browser's way in (R4): ws_relay.py, a WebSocket on @WSPORT@ to the trail server on @PORT@ (install.sh
+# fills in @OPT@, @VAR@, @PORT@, @WSPORT@ and puts this in /etc/systemd/system)
+[Unit]
+Description=Retro AI Games trail server's WebSocket relay (a browser emulator's serial card)
+After=network-online.target trail-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trail
+Group=trail
+WorkingDirectory=@VAR@
+ExecStart=@OPT@/venv/bin/python @OPT@/ws_relay.py --listen @WSLISTEN@:@WSPORT@ --server 127.0.0.1:@PORT@
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

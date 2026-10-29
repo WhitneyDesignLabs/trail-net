@@ -1,0 +1,6 @@
+drivers/NET.bin
+__pycache__/
+*.pyc
+server/badwords.txt
+server/*.local.txt
+*.db

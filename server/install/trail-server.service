@@ -1,0 +1,23 @@
+# trail-server.service — the game server (R1; install.sh fills in @OPT@, @VAR@, @PORT@ and puts this in /etc/systemd/system)
+[Unit]
+Description=Retro AI Games trail server (INDEPENDENCE's wall, notes and links)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trail
+Group=trail
+WorkingDirectory=@VAR@
+Environment=TRAIL_DB=@VAR@/trail.db
+ExecStart=@OPT@/venv/bin/python @OPT@/trail_server.py --host 0.0.0.0 --port @PORT@ --links @OPT@/links.txt --badwords @OPT@/badwords.txt
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=@VAR@
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

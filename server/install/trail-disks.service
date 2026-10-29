@@ -1,0 +1,23 @@
+# trail-disks.service — the writable network disk (E5b): disk_origin.py on 127.0.0.1:@DISKPORT@, the images in @DISKS_RW@
+# (LATEST.PO: Scott's test image, written over by make-dist). Caddy passes /DISKS/LATEST.PO to it; install.sh --web
+# fills in @OPT@, @DISKS_RW@, @DISKPORT@ and puts this in /etc/systemd/system.
+[Unit]
+Description=Retro AI Games writable disk image for the CoGS card (ranged GET and PUT)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trail
+Group=trail
+ExecStart=@OPT@/venv/bin/python @OPT@/disk_origin.py --dir @DISKS_RW@ --listen 127.0.0.1:@DISKPORT@
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=@DISKS_RW@
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

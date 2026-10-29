@@ -1,0 +1,60 @@
+# written by the trail server install.sh --web (R4b; E5b): wss://@WEBHOST@:@WSSPORT@ to ws_relay on 127.0.0.1:@WSPORT@
+# E5b: /disks/ (and /DISKS/: an Apple II types capitals) serves the CoGS card's network disks, over HTTPS on @WSSPORT@
+# and plain HTTP on 80 by the bare address; each request logged.
+#   /DISKS/LATEST.PO  Scott's test image, writable: disk_origin.py on 127.0.0.1:@DISKPORT@ (@DISKS_RW@) takes the card's
+#                     ranged PUTs; make-dist.py writes it over at every build.
+#   anything else     /srv/disks, read-only (the releases, INDEP1-<tag>.po): a write gets 405, which latches the card's
+#                     mount read-only, so SAVE reports a write-protected disk (a 200 made the card think it was stored).
+# R8-D: a connection the card keeps open may idle 30 minutes (Caddy's default is 5): the card parks a connection between
+# read-ahead windows and the game can sit at a prompt for long between reads.
+{
+	servers {
+		timeouts {
+			idle 30m
+		}
+	}
+}
+(disks) {
+	@write method PUT POST PATCH DELETE
+	handle /disks/latest.po {
+		reverse_proxy 127.0.0.1:@DISKPORT@
+	}
+	handle /DISKS/LATEST.PO {
+		reverse_proxy 127.0.0.1:@DISKPORT@
+	}
+	handle_path /disks/* {
+		respond @write 405
+		root * /srv/disks
+		file_server
+	}
+	handle_path /DISKS/* {
+		respond @write 405
+		root * /srv/disks
+		file_server
+	}
+}
+# R9-N2: /play/ is web/ (both games in the browser: deploy-web.sh puts it in /srv/play), on 443 and on @WSSPORT@
+(play) {
+	redir /play /play/
+	handle_path /play/* {
+		root * /srv/play
+		file_server
+	}
+}
+@WEBHOST@ {
+	log
+	import disks
+	import play
+}
+@WEBHOST@:@WSSPORT@ {
+	log
+	import disks
+	import play
+	handle {
+		reverse_proxy 127.0.0.1:@WSPORT@
+	}
+}
+http://@DISKHOST@ {
+	log
+	import disks
+}
