@@ -1,0 +1,24 @@
+# trail-count.service — R9-D7: the wall's count over HTTP (count_http.py on 127.0.0.1:@COUNTPORT@: GET /count -> JSON),
+# for web pages such as the CoGS Game Room lobby; Caddy routes /count to it. install.sh --web fills in @OPT@, @VAR@,
+# @COUNTPORT@ and puts this in /etc/systemd/system.
+[Unit]
+Description=Retro AI Games trail server's count over HTTP (GET /count)
+After=network-online.target trail-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=trail
+Group=trail
+WorkingDirectory=@VAR@
+ExecStart=@OPT@/venv/bin/python @OPT@/count_http.py --db @VAR@/trail.db --listen 127.0.0.1:@COUNTPORT@
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=@VAR@
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

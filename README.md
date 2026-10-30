@@ -16,9 +16,11 @@ server/                  the game server and its helpers (Python 3)
   ws_relay.py            WebSocket <-> the server, for an emulator in a browser (Apple2TS with a WebSocket serial card)
   ssc_relay.py           a serial port <-> the server, for a Super Serial Card on a PC's cable
   disk_origin.py         a writable network disk for the CoGS card: ranged GET and ranged PUT on a folder of .po images
+  count_http.py          the wall's count as JSON over HTTP (GET /count), for web pages such as a game lobby
   test_trail_server.py   the server's tests
   install/               install.sh (a Raspberry Pi or an Ubuntu VM: systemd units, a venv, the firewall, Caddy for
-                         TLS and the disks), the units, Caddyfile.web, backup.sh, uninstall.sh
+                         TLS, the disks, /count and a /play/ folder), the units, Caddyfile.web, deploy-web.sh,
+                         backup.sh, uninstall.sh
 drivers/                 the NET file: the 6502 side (Ophis assembler)
   net.s                  the common part, the Super Serial Card, the Uthernet II (W5100), the CoGS card's first half
   net_cogs.s             the CoGS card's second half
@@ -46,7 +48,11 @@ For a browser on an https page, and for the CoGS card's network disks, give it a
     sudo sh server/install/install.sh --web <a-b-c-d>.sslip.io
 
 Caddy then answers `wss://<host>:6503` with a Let's Encrypt certificate, and serves `/disks/` and `/DISKS/`: read-only
-images from `/srv/disks`, and writable ones from `/srv/disks-rw` through `disk_origin.py`. No domain is needed:
+images from `/srv/disks`, and writable ones from `/srv/disks-rw` through `disk_origin.py`.
+
+`/count` on every site answers the protocol's COUNT as JSON, `{"parties": n, "river": n, "road": n}` (`?game=<id>` for
+another game), with a 15-second cache and CORS open, so any web page can show a live count. INDEPENDENCE's is
+`https://158-101-9-238.sslip.io/count`. No domain is needed:
 `<a-b-c-d>.sslip.io` resolves to a.b.c.d. A cloud firewall must admit TCP 80 (the certificate), 6502 and 6503.
 
 **The word filter.** The wall and the notes are text players type, so the server can blank listed words (PROTOCOL.md).
@@ -70,6 +76,13 @@ sends a line and reads the reply. Three cards are supported:
 
 In an emulator, AppleWin's Uthernet II and SSC both work. Apple2TS works in a browser with the WebSocket serial card
 (`ws_relay.py`).
+
+## The other way online with a CoGS card
+
+trail-net is the raw-TCP path: your program talks a line protocol to a server of your own. The CoGS card also offers a
+way with no server of your own: Rob Perissi's **cogs-gameroom** (github.com/rperissi/cogs-gameroom), HTTP and JSON to
+the card's Game Room lobby, where players find each other. Pick by what your game needs: a shared world you keep
+(trail-net), or matchmaking and messages through the lobby (cogs-gameroom).
 
 ## Boot from a URL, and release candidates without SD cards
 

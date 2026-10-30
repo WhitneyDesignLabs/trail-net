@@ -33,6 +33,13 @@
 		file_server
 	}
 }
+# R9-D7: /count is the wall's count as JSON (count_http.py on 127.0.0.1:@COUNTPORT@), on every site: web pages (the CoGS
+# Game Room lobby) read it
+(count) {
+	handle /count {
+		reverse_proxy 127.0.0.1:@COUNTPORT@
+	}
+}
 # R9-N2: /play/ is web/ (both games in the browser: deploy-web.sh puts it in /srv/play), on 443 and on @WSSPORT@
 (play) {
 	redir /play /play/
@@ -45,11 +52,13 @@
 	log
 	import disks
 	import play
+	import count
 }
 @WEBHOST@:@WSSPORT@ {
 	log
 	import disks
 	import play
+	import count
 	handle {
 		reverse_proxy 127.0.0.1:@WSPORT@
 	}
@@ -57,4 +66,5 @@
 http://@DISKHOST@ {
 	log
 	import disks
+	import count
 }

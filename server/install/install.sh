@@ -16,7 +16,9 @@ UNIT="$PREFIX/etc/systemd/system/trail-server.service"
 WSUNIT="$PREFIX/etc/systemd/system/trail-ws.service"
 DISKUNIT="$PREFIX/etc/systemd/system/trail-disks.service"
 DISKS_RW="${DISKS_RW:-/srv/disks-rw}"   # E5b: --web also serves the CoGS card's network disks: /srv/disks read-only by
-DISKPORT="${DISKPORT:-6505}"          # Caddy, /DISKS/LATEST.PO writable by disk_origin.py on 127.0.0.1:$DISKPORT
+DISKPORT="${DISKPORT:-6505}"
+COUNTPORT="${COUNTPORT:-6506}"         # R9-D7: count_http.py (GET /count) behind Caddy
+COUNTUNIT="$PREFIX/etc/systemd/system/trail-count.service"          # Caddy, /DISKS/LATEST.PO writable by disk_origin.py on 127.0.0.1:$DISKPORT
 PORT="${PORT:-6502}"
 WSPORT="${WSPORT:-6503}"      # R4: ws_relay.py, a browser emulator's serial card (WSPORT=0: no relay)
 # R4b: sudo sh install.sh --web <hostname> - the relay behind TLS for a page served over https (a browser refuses ws://
@@ -51,7 +53,7 @@ if [ -z "$PREFIX" ] && ! id trail >/dev/null 2>&1; then
     useradd --system --home-dir /var/lib/trail --shell /usr/sbin/nologin trail
 fi
 mkdir -p "$OPT" "$VAR/backups"
-cp "$SERVER/trail_server.py" "$SERVER/trail_admin.py" "$SERVER/ws_relay.py" "$SERVER/disk_origin.py" "$HERE/backup.sh" "$OPT/"
+cp "$SERVER/trail_server.py" "$SERVER/trail_admin.py" "$SERVER/ws_relay.py" "$SERVER/disk_origin.py" "$SERVER/count_http.py" "$HERE/backup.sh" "$OPT/"
 if [ ! -f "$SERVER/badwords.txt" ]; then                # (trail-net: bring your own list; none is published)
     echo "install.sh: no server/badwords.txt - the word filter is off until there is one (README)"
 elif [ -f "$OPT/badwords.txt" ] && ! cmp -s "$SERVER/badwords.txt" "$OPT/badwords.txt"; then
@@ -82,11 +84,12 @@ if [ -n "$WEBHOST" ] && [ -z "$PREFIX" ] && [ "$WSPORT" != 0 ]; then
         cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.orig
     fi
     sed -e "s|@WEBHOST@|$WEBHOST|g" -e "s|@WSSPORT@|$WSSPORT|g" -e "s|@WSPORT@|$WSPORT|g" -e "s|@DISKHOST@|$DISKHOST|g" \
-        -e "s|@DISKPORT@|$DISKPORT|g" -e "s|@DISKS_RW@|$DISKS_RW|g" "$HERE/Caddyfile.web" > /etc/caddy/Caddyfile
+        -e "s|@DISKPORT@|$DISKPORT|g" -e "s|@DISKS_RW@|$DISKS_RW|g" -e "s|@COUNTPORT@|$COUNTPORT|g" "$HERE/Caddyfile.web" > /etc/caddy/Caddyfile
     caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
     mkdir -p /srv/disks "$DISKS_RW" /srv/play
     chown trail:trail "$DISKS_RW"
     sed -e "s|@OPT@|/opt/trail|g" -e "s|@DISKS_RW@|$DISKS_RW|g" -e "s|@DISKPORT@|$DISKPORT|g" "$HERE/trail-disks.service" > "$DISKUNIT"
+    sed -e "s|@OPT@|/opt/trail|g" -e "s|@VAR@|/var/lib/trail|g" -e "s|@COUNTPORT@|$COUNTPORT|g" "$HERE/trail-count.service" > "$COUNTUNIT"
 fi
 if [ -z "$PREFIX" ] && command -v iptables >/dev/null 2>&1 && iptables -S INPUT 2>/dev/null | grep -q -- "-j REJECT"; then
     # R4: Oracle Cloud's Ubuntu image ends INPUT with a REJECT (only 22 gets past it): the port goes in before that rule,
@@ -108,6 +111,7 @@ if [ -z "${NO_SYSTEMD:-}" ]; then
     if [ "$WSPORT" != 0 ]; then systemctl enable --now trail-ws.service; systemctl restart trail-ws.service; fi
     if [ -n "$WEBHOST" ] && [ "$WSPORT" != 0 ]; then
         systemctl enable --now trail-disks.service; systemctl restart trail-disks.service
+        systemctl enable --now trail-count.service; systemctl restart trail-count.service
         systemctl enable caddy; systemctl restart caddy
     fi
     sleep 1
