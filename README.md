@@ -30,6 +30,8 @@ drivers/                 the NET file: the 6502 side (Ophis assembler)
   COGS-NOTES.md          what we learned on the CoGS card
 netcheck/NETCHECK.dsk    a bootable sample client (P probe, H hello, C count): binary only
 PROTOCOL.md              the server's commands and replies
+docs/FIRST-PROGRAM.md    your first online 6502 program: HI to a server on your own PC, on the CoGS card (a tutorial;
+                         its example, docs/first-program/hello.s)
 ```
 
 ## Run a server
@@ -60,6 +62,9 @@ This repository publishes no list. Put your own `server/badwords.txt` beside the
 `word*` for every word that starts so. Without one the filter is off.
 
 ## Put a 6502 program on the wire
+
+The shortest start is `docs/FIRST-PROGRAM.md`: a fifty-line program that says HI to a server on your own PC and prints
+the answer, step by step.
 
 Build the drivers with Ophis:
 
