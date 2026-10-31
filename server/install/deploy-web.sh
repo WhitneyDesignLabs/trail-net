@@ -1,6 +1,6 @@
 #!/bin/bash
 # deploy-web.sh — R9-N2: web/ (both games in the browser) onto the cloud as /srv/play, served by Caddy at /play/:
-# https://<host>/play/ (443, once Oracle's edge admits it) and https://<host>:6503/play/ (today). Friday's rebuild is
+# https://<host>/play/ (443; a cloud firewall must admit it) and https://<host>:6503/play/. Friday's rebuild is
 #     bash web/build.sh && bash server/install/deploy-web.sh
 # The folder goes up whole into /srv/play.new and is swapped in (the old one kept as /srv/play.old), then Caddy reloads:
 # a player mid-page never gets half of each. The host and the login are the argument, user@host (your SSH key).
@@ -22,4 +22,4 @@ sudo mv /srv/play.new /srv/play
 sudo systemctl reload caddy
 cd /srv/play/disks && sha256sum -c --quiet SHA256SUMS.txt && echo "deploy-web.sh: /srv/play in place, its disks check"'
 H="${AT#*@}"
-echo "deploy-web.sh: https://$(echo "$H" | tr . -).sslip.io:6503/play/  (and /play/ on 443 once Oracle's edge admits it)"
+echo "deploy-web.sh: https://$(echo "$H" | tr . -).sslip.io/play/  and :6503/play/"
